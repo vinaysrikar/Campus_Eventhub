@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { LogIn, AlertCircle, Eye, EyeOff, UserPlus, Mail, ShieldCheck, CheckCircle2, ArrowLeft, ArrowRight, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
 const DEPARTMENTS = ['CSE', 'ECE', 'MECH', 'CIVIL', 'EEE', 'IT'] as const;
 
@@ -27,7 +28,7 @@ const LogoIcon = () => (
 );
 
 // ─── Login Form ────────────────────────────────────────────────────────────────
-const LoginForm = () => {
+const LoginForm = ({ onForgot }: { onForgot: () => void }) => {
   const [email, setEmail]     = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw]   = useState(false);
@@ -65,6 +66,11 @@ const LoginForm = () => {
             {showPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
           </button>
         </div>
+        <div className="flex justify-end mt-1">
+          <button type="button" onClick={onForgot} className="text-xs text-primary hover:underline">
+            Forgot password?
+          </button>
+        </div>
       </div>
       {error && (
         <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 p-3 rounded-xl">
@@ -82,7 +88,8 @@ const LoginForm = () => {
 // ─── Register Form (3 steps) ───────────────────────────────────────────────────
 const RegisterForm = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { register } = useAuth();
+  const qc = useQueryClient();
 
   // Step state
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -148,16 +155,17 @@ const RegisterForm = () => {
 
       // 2. Register account
       setStep(3);
-      const res = await authAPI.register({ name, email, password, department: dept });
-      localStorage.setItem('token', res.data.token);
+      await register({ name, email, password, department: dept });
       toast.success('Account created! Welcome to Campus EventHub 🎉');
       
-      // FIX: Invalidate query so the dashboard and org chart are up-to-date
-      // Using query invalidation logic handled globally, or just delay navigation slightly
+      // Invalidate queries so that organizational chart and pages are immediately up-to-date
+      qc.invalidateQueries({ queryKey: ['organizers'] });
+      qc.invalidateQueries({ queryKey: ['events'] });
+      
       setTimeout(() => {
         navigate('/dashboard');
-        window.location.reload(); // Quick fix to ensure OrgChart refreshes cache properly
       }, 500);
+    } catch (err: any) {
       const msg = err.response?.data?.error || 'Something went wrong.';
       if (msg.toLowerCase().includes('otp') || msg.toLowerCase().includes('code') || msg.toLowerCase().includes('verif')) {
         setStep(2);
@@ -366,9 +374,116 @@ const RegisterForm = () => {
   );
 };
 
+// ─── Forgot Password Form ──────────────────────────────────────────────────────
+const ForgotPasswordForm = ({ onBack }: { onBack: () => void }) => {
+  const [step, setStep] = useState<1 | 2>(1);
+  const [email, setEmail] = useState('');
+  const [otp, setOtp] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [showPw, setShowPw] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  const handleStep1 = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      await authAPI.forgotPassword(email);
+      toast.success('Password reset code sent to your email!');
+      setStep(2);
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to send code.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStep2 = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    
+    if (otp.length !== 6) return setError('Enter the 6-digit code.');
+    if (newPassword.length < 6) return setError('Password must be at least 6 characters.');
+
+    setLoading(true);
+    try {
+      await authAPI.resetPassword({ email, code: otp, newPassword });
+      toast.success('Password reset successfully!');
+      setSuccess(true);
+      setTimeout(onBack, 2000);
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to reset password.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (success) {
+    return (
+      <div className="text-center py-8 space-y-4">
+        <div className="w-16 h-16 mx-auto rounded-full bg-green-500/20 text-green-500 flex items-center justify-center">
+          <CheckCircle2 className="w-8 h-8" />
+        </div>
+        <p className="font-semibold text-lg">Password Reset Complete</p>
+        <p className="text-sm text-muted-foreground">You can now login with your new password.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-5">
+      {step === 1 ? (
+        <form onSubmit={handleStep1} className="space-y-5">
+          <div className="space-y-2">
+            <Label>Enter your college email</Label>
+            <Input type="email" placeholder="john.cse@gmail.com" value={email}
+              onChange={e => setEmail(e.target.value)} className="h-12 rounded-xl" required />
+          </div>
+          {error && <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-xl">{error}</div>}
+          <Button type="submit" disabled={loading} className="w-full gradient-primary text-primary-foreground h-12 rounded-xl">
+            {loading ? 'Sending code…' : 'Send Reset Code'}
+          </Button>
+          <div className="text-center pt-2">
+            <button type="button" onClick={onBack} className="text-sm text-muted-foreground hover:text-foreground">Back to login</button>
+          </div>
+        </form>
+      ) : (
+        <form onSubmit={handleStep2} className="space-y-5">
+          <div className="space-y-2">
+            <Label>6-Digit Code</Label>
+            <Input placeholder="• • • • • •" value={otp} maxLength={6}
+              onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
+              className="h-14 rounded-xl text-center text-2xl font-mono tracking-[0.5em]" required />
+          </div>
+          <div className="space-y-2">
+            <Label>New Password</Label>
+            <div className="relative">
+              <Input type={showPw ? 'text' : 'password'} placeholder="Min 6 chars" value={newPassword}
+                onChange={e => setNewPassword(e.target.value)} className="h-12 rounded-xl pr-10" required />
+              <button type="button" onClick={() => setShowPw(!showPw)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+          {error && <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-xl">{error}</div>}
+          <Button type="submit" disabled={loading} className="w-full gradient-primary text-primary-foreground h-12 rounded-xl">
+            {loading ? 'Resetting…' : 'Reset Password'}
+          </Button>
+          <div className="text-center pt-2">
+            <button type="button" onClick={onBack} className="text-sm text-muted-foreground hover:text-foreground">Cancel</button>
+          </div>
+        </form>
+      )}
+    </div>
+  );
+};
+
 // ─── Main Login Page ────────────────────────────────────────────────────────────
 const Login = () => {
-  const [tab, setTab] = useState<'login' | 'register'>('login');
+  const [tab, setTab] = useState<'login' | 'register' | 'forgot'>('login');
 
   return (
     <div className="min-h-screen">
@@ -407,11 +522,15 @@ const Login = () => {
             <AnimatePresence mode="wait">
               {tab === 'login' ? (
                 <motion.div key="login" initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, y:-8 }}>
-                  <LoginForm />
+                  <LoginForm onForgot={() => setTab('forgot')} />
                 </motion.div>
-              ) : (
+              ) : tab === 'register' ? (
                 <motion.div key="register" initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, y:-8 }}>
                   <RegisterForm />
+                </motion.div>
+              ) : (
+                <motion.div key="forgot" initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, y:-8 }}>
+                  <ForgotPasswordForm onBack={() => setTab('login')} />
                 </motion.div>
               )}
             </AnimatePresence>

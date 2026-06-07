@@ -76,69 +76,131 @@ export const organizers: Organizer[] = [
 ];
 
 export const events: EventItem[] = [
+  // ── CSE (4 events) ──────────────────────────────────────────
   {
-    id: 'evt1', title: 'HackFusion 2026', description: 'A 36-hour national level hackathon bringing together the brightest minds to solve real-world problems using cutting-edge technology.',
-    department: 'CSE', date: '2026-03-20', time: '09:00 AM', venue: 'Main Auditorium', organizer: 'Dr. Priya Sharma',
+    id: 'evt1', title: 'HackFusion 2026', description: 'A 36-hour national level hackathon bringing together the brightest minds to solve real-world problems using cutting-edge technology. Build innovative solutions, win exciting prizes, and network with industry leaders.',
+    department: 'CSE', date: '2026-04-20', time: '09:00 AM', venue: 'Main Auditorium', organizer: 'Dr. Priya Sharma',
     registrations: 245, maxCapacity: 300, status: 'upcoming', tags: ['Hackathon', 'Coding', 'Innovation'], featured: true,
-    googleFormUrl: 'https://forms.google.com/example-hackfusion',
   },
   {
-    id: 'evt2', title: 'CircuitCraft Workshop', description: 'Hands-on workshop on advanced PCB design and IoT integration with real-world applications.',
-    department: 'ECE', date: '2026-03-22', time: '10:00 AM', venue: 'ECE Lab Block', organizer: 'Dr. Suresh M.',
-    registrations: 80, maxCapacity: 120, status: 'upcoming', tags: ['Workshop', 'IoT', 'Hardware'],
-    googleFormUrl: 'https://forms.google.com/example-circuitcraft',
-  },
-  {
-    id: 'evt3', title: 'RoboWars Championship', description: 'Inter-college robotics competition featuring battle bots, line followers, and autonomous navigation challenges.',
-    department: 'MECH', date: '2026-03-25', time: '11:00 AM', venue: 'Mechanical Workshop', organizer: 'Dr. Arun B.',
-    registrations: 150, maxCapacity: 200, status: 'upcoming', tags: ['Robotics', 'Competition', 'Engineering'], featured: true,
-    googleFormUrl: 'https://forms.google.com/example-robowars',
-  },
-  {
-    id: 'evt4', title: 'Bridge Building Contest', description: 'Design and build model bridges tested for load-bearing capacity. Combines creativity with structural engineering principles.',
-    department: 'CIVIL', date: '2026-03-28', time: '02:00 PM', venue: 'Civil Engineering Lab', organizer: 'Dr. Ramya K.',
-    registrations: 60, maxCapacity: 100, status: 'upcoming', tags: ['Design', 'Structural', 'Contest'],
-  },
-  {
-    id: 'evt5', title: 'Power Systems Symposium', description: 'National symposium on renewable energy systems, smart grids, and the future of power distribution.',
-    department: 'EEE', date: '2026-04-02', time: '09:30 AM', venue: 'Seminar Hall A', organizer: 'Dr. Sanjay P.',
-    registrations: 95, maxCapacity: 150, status: 'upcoming', tags: ['Symposium', 'Energy', 'Sustainability'],
-  },
-  {
-    id: 'evt6', title: 'CyberSec Summit', description: 'Deep dive into cybersecurity threats, ethical hacking demonstrations, and network defense strategies.',
-    department: 'IT', date: '2026-04-05', time: '10:00 AM', venue: 'IT Seminar Hall', organizer: 'Dr. Ashwin R.',
-    registrations: 110, maxCapacity: 180, status: 'upcoming', tags: ['Security', 'Hacking', 'Network'], featured: true,
-    googleFormUrl: 'https://forms.google.com/example-cybersec',
-  },
-  {
-    id: 'evt7', title: 'AI/ML Bootcamp', description: 'Intensive 3-day bootcamp covering machine learning fundamentals, deep learning, and practical AI applications.',
-    department: 'CSE', date: '2026-04-10', time: '09:00 AM', venue: 'CS Lab Complex', organizer: 'Prof. Rajesh Kumar',
+    id: 'evt2', title: 'AI/ML Bootcamp', description: 'Intensive 3-day bootcamp covering machine learning fundamentals, deep learning architectures, and practical AI applications with hands-on projects using TensorFlow and PyTorch.',
+    department: 'CSE', date: '2026-04-25', time: '10:00 AM', venue: 'CS Lab Complex', organizer: 'Prof. Rajesh Kumar',
     registrations: 180, maxCapacity: 200, status: 'upcoming', tags: ['AI', 'Machine Learning', 'Bootcamp'],
   },
   {
-    id: 'evt8', title: 'VLSI Design Workshop', description: 'Explore VLSI chip design methodologies with hands-on experience using industry-standard EDA tools.',
-    department: 'ECE', date: '2026-04-12', time: '10:00 AM', venue: 'VLSI Lab', organizer: 'Prof. Lakshmi N.',
-    registrations: 55, maxCapacity: 80, status: 'upcoming', tags: ['VLSI', 'Workshop', 'Design'],
+    id: 'evt3', title: 'Web Dev Summit', description: 'A full-day conference featuring talks on React, Next.js, Node.js, and modern full-stack development practices. Includes live coding sessions and portfolio reviews.',
+    department: 'CSE', date: '2026-05-02', time: '09:30 AM', venue: 'Seminar Hall B', organizer: 'Ms. Anitha R.',
+    registrations: 120, maxCapacity: 250, status: 'upcoming', tags: ['Web Development', 'React', 'Full Stack'],
   },
   {
-    id: 'evt9', title: 'AutoExpo Technical Fest', description: 'Annual technical festival showcasing automobile innovations, EV prototypes, and advanced manufacturing techniques.',
-    department: 'MECH', date: '2026-04-15', time: '10:00 AM', venue: 'Open Ground', organizer: 'Prof. Kavitha S.',
+    id: 'evt4', title: 'Competitive Programming Contest', description: 'Test your algorithmic problem-solving skills in this intense 5-hour coding contest. Problems range from beginner to advanced level with exciting prizes for the top performers.',
+    department: 'CSE', date: '2026-05-10', time: '02:00 PM', venue: 'Computer Center', organizer: 'Mr. Vikram S.',
+    registrations: 90, maxCapacity: 150, status: 'upcoming', tags: ['Coding', 'Algorithms', 'Competition'],
+  },
+  // ── ECE (4 events) ──────────────────────────────────────────
+  {
+    id: 'evt5', title: 'CircuitCraft Workshop', description: 'Hands-on workshop on advanced PCB design, circuit simulation, and IoT integration with real-world applications. Learn to design and fabricate your own circuit boards.',
+    department: 'ECE', date: '2026-04-22', time: '10:00 AM', venue: 'ECE Lab Block', organizer: 'Dr. Suresh M.',
+    registrations: 80, maxCapacity: 120, status: 'upcoming', tags: ['Workshop', 'IoT', 'Hardware'], featured: true,
+  },
+  {
+    id: 'evt6', title: 'VLSI Design Workshop', description: 'Explore VLSI chip design methodologies with hands-on experience using industry-standard EDA tools. Covers RTL design, synthesis, and physical design flow.',
+    department: 'ECE', date: '2026-04-28', time: '10:00 AM', venue: 'VLSI Lab', organizer: 'Prof. Lakshmi N.',
+    registrations: 55, maxCapacity: 80, status: 'upcoming', tags: ['VLSI', 'Workshop', 'Chip Design'],
+  },
+  {
+    id: 'evt7', title: 'Embedded Systems Hackathon', description: '24-hour hackathon focused on building innovative embedded systems projects using Arduino, Raspberry Pi, and ESP32 platforms.',
+    department: 'ECE', date: '2026-05-05', time: '08:00 AM', venue: 'ECE Seminar Hall', organizer: 'Mr. Arjun K.',
+    registrations: 65, maxCapacity: 100, status: 'upcoming', tags: ['Embedded', 'Arduino', 'Hackathon'],
+  },
+  {
+    id: 'evt8', title: '5G & Beyond Symposium', description: 'National symposium exploring the latest advancements in 5G communication, antenna design, and future wireless technologies.',
+    department: 'ECE', date: '2026-05-12', time: '09:30 AM', venue: 'Conference Hall', organizer: 'Ms. Divya P.',
+    registrations: 110, maxCapacity: 200, status: 'upcoming', tags: ['5G', 'Communication', 'Symposium'],
+  },
+  // ── MECH (4 events) ─────────────────────────────────────────
+  {
+    id: 'evt9', title: 'RoboWars Championship', description: 'Inter-college robotics competition featuring battle bots, line followers, and autonomous navigation challenges. Build, compete, and showcase your engineering prowess!',
+    department: 'MECH', date: '2026-04-21', time: '11:00 AM', venue: 'Mechanical Workshop', organizer: 'Dr. Arun B.',
+    registrations: 150, maxCapacity: 200, status: 'upcoming', tags: ['Robotics', 'Competition', 'Engineering'], featured: true,
+  },
+  {
+    id: 'evt10', title: 'AutoExpo Technical Fest', description: 'Annual technical festival showcasing automobile innovations, EV prototypes, 3D-printed models, and advanced manufacturing techniques.',
+    department: 'MECH', date: '2026-04-30', time: '10:00 AM', venue: 'Open Ground', organizer: 'Prof. Kavitha S.',
     registrations: 200, maxCapacity: 500, status: 'upcoming', tags: ['TechFest', 'Automobile', 'Exhibition'],
   },
   {
-    id: 'evt10', title: 'Smart City Hackathon', description: 'Collaborative hackathon focused on developing innovative solutions for urban infrastructure challenges.',
-    department: 'CIVIL', date: '2026-04-18', time: '09:00 AM', venue: 'Innovation Center', organizer: 'Prof. Ganesh M.',
+    id: 'evt11', title: 'CAD/CAM Workshop', description: 'Learn advanced 3D modeling, simulation, and CNC programming using SolidWorks and CATIA. Includes hands-on sessions on CNC machining and rapid prototyping.',
+    department: 'MECH', date: '2026-05-08', time: '09:00 AM', venue: 'CAD Lab', organizer: 'Mr. Ravi T.',
+    registrations: 40, maxCapacity: 60, status: 'upcoming', tags: ['CAD', 'CAM', 'Workshop'],
+  },
+  {
+    id: 'evt12', title: 'Thermal Engineering Seminar', description: 'Expert seminar covering heat transfer analysis, HVAC system design, and renewable thermal energy systems.',
+    department: 'MECH', date: '2026-05-15', time: '02:00 PM', venue: 'Seminar Hall C', organizer: 'Ms. Sneha G.',
+    registrations: 70, maxCapacity: 120, status: 'upcoming', tags: ['Thermal', 'Seminar', 'HVAC'],
+  },
+  // ── CIVIL (4 events) ────────────────────────────────────────
+  {
+    id: 'evt13', title: 'Bridge Building Contest', description: 'Design and build model bridges tested for load-bearing capacity. Combines creativity with structural engineering principles.',
+    department: 'CIVIL', date: '2026-04-23', time: '02:00 PM', venue: 'Civil Engineering Lab', organizer: 'Dr. Ramya K.',
+    registrations: 60, maxCapacity: 100, status: 'upcoming', tags: ['Design', 'Structural', 'Contest'], featured: true,
+  },
+  {
+    id: 'evt14', title: 'Smart City Hackathon', description: 'Collaborative hackathon focused on developing innovative solutions for urban infrastructure challenges.',
+    department: 'CIVIL', date: '2026-05-01', time: '09:00 AM', venue: 'Innovation Center', organizer: 'Prof. Ganesh M.',
     registrations: 75, maxCapacity: 120, status: 'upcoming', tags: ['Hackathon', 'Smart City', 'Urban'],
   },
   {
-    id: 'evt11', title: 'Cloud Computing Workshop', description: 'Learn to deploy, scale, and manage cloud infrastructure using AWS and Azure with live demonstrations.',
-    department: 'IT', date: '2026-04-20', time: '10:00 AM', venue: 'IT Lab 3', organizer: 'Prof. Nisha K.',
-    registrations: 90, maxCapacity: 100, status: 'upcoming', tags: ['Cloud', 'AWS', 'Workshop'],
+    id: 'evt15', title: 'GIS & Remote Sensing Workshop', description: 'Hands-on workshop on Geographic Information Systems, satellite imagery analysis, and drone-based surveying techniques.',
+    department: 'CIVIL', date: '2026-05-06', time: '10:00 AM', venue: 'GIS Lab', organizer: 'Mr. Karthik S.',
+    registrations: 45, maxCapacity: 80, status: 'upcoming', tags: ['GIS', 'Remote Sensing', 'Workshop'],
   },
   {
-    id: 'evt12', title: 'Green Energy Expo', description: 'Exhibition and seminar on solar panels, wind energy, and battery storage innovations.',
-    department: 'EEE', date: '2026-04-22', time: '11:00 AM', venue: 'Exhibition Hall', organizer: 'Prof. Deepa L.',
+    id: 'evt16', title: 'Sustainable Construction Expo', description: 'Exhibition showcasing green building materials, eco-friendly construction techniques, and sustainable architecture designs.',
+    department: 'CIVIL', date: '2026-05-14', time: '11:00 AM', venue: 'Exhibition Hall', organizer: 'Ms. Pooja R.',
+    registrations: 95, maxCapacity: 200, status: 'upcoming', tags: ['Sustainability', 'Green Building', 'Expo'],
+  },
+  // ── EEE (4 events) ──────────────────────────────────────────
+  {
+    id: 'evt17', title: 'Power Systems Symposium', description: 'National symposium on renewable energy systems, smart grids, and the future of power distribution.',
+    department: 'EEE', date: '2026-04-24', time: '09:30 AM', venue: 'Seminar Hall A', organizer: 'Dr. Sanjay P.',
+    registrations: 95, maxCapacity: 150, status: 'upcoming', tags: ['Symposium', 'Energy', 'Sustainability'], featured: true,
+  },
+  {
+    id: 'evt18', title: 'Green Energy Expo', description: 'Exhibition and seminar on solar panels, wind energy, battery storage innovations, and electric vehicle charging infrastructure.',
+    department: 'EEE', date: '2026-05-03', time: '11:00 AM', venue: 'Exhibition Hall', organizer: 'Prof. Deepa L.',
     registrations: 130, maxCapacity: 250, status: 'upcoming', tags: ['Expo', 'Green Energy', 'Innovation'],
+  },
+  {
+    id: 'evt19', title: 'Electric Vehicle Design Challenge', description: 'Inter-college competition to design and prototype EV motor controllers. Teams will build working motor drive circuits.',
+    department: 'EEE', date: '2026-05-09', time: '10:00 AM', venue: 'EEE Lab Block', organizer: 'Mr. Harish K.',
+    registrations: 55, maxCapacity: 100, status: 'upcoming', tags: ['EV', 'Motor Design', 'Competition'],
+  },
+  {
+    id: 'evt20', title: 'PLC & Automation Workshop', description: 'Industrial automation workshop covering PLC programming, SCADA systems, and Industry 4.0 concepts.',
+    department: 'EEE', date: '2026-05-16', time: '09:00 AM', venue: 'Automation Lab', organizer: 'Ms. Revathi S.',
+    registrations: 50, maxCapacity: 80, status: 'upcoming', tags: ['PLC', 'Automation', 'Workshop'],
+  },
+  // ── IT (4 events) ───────────────────────────────────────────
+  {
+    id: 'evt21', title: 'CyberSec Summit', description: 'Deep dive into cybersecurity threats, ethical hacking demonstrations, CTF challenges, and network defense strategies.',
+    department: 'IT', date: '2026-04-26', time: '10:00 AM', venue: 'IT Seminar Hall', organizer: 'Dr. Ashwin R.',
+    registrations: 110, maxCapacity: 180, status: 'upcoming', tags: ['Security', 'Hacking', 'Network'], featured: true,
+  },
+  {
+    id: 'evt22', title: 'Cloud Computing Workshop', description: 'Learn to deploy, scale, and manage cloud infrastructure using AWS and Azure with live demonstrations.',
+    department: 'IT', date: '2026-05-04', time: '10:00 AM', venue: 'IT Lab 3', organizer: 'Prof. Nisha K.',
+    registrations: 90, maxCapacity: 100, status: 'upcoming', tags: ['Cloud', 'AWS', 'Docker'],
+  },
+  {
+    id: 'evt23', title: 'DevOps & CI/CD Pipeline Workshop', description: 'Master modern DevOps practices including Git workflows, Jenkins pipelines, Kubernetes orchestration, and monitoring.',
+    department: 'IT', date: '2026-05-11', time: '09:30 AM', venue: 'IT Lab 1', organizer: 'Mr. Dinesh P.',
+    registrations: 50, maxCapacity: 80, status: 'upcoming', tags: ['DevOps', 'CI/CD', 'Kubernetes'],
+  },
+  {
+    id: 'evt24', title: 'Data Analytics & Visualization Bootcamp', description: 'Two-day bootcamp on data analytics using Python, Pandas, and Power BI. Learn to extract insights from real-world datasets.',
+    department: 'IT', date: '2026-05-17', time: '10:00 AM', venue: 'IT Seminar Hall', organizer: 'Ms. Swathi M.',
+    registrations: 75, maxCapacity: 120, status: 'upcoming', tags: ['Data Analytics', 'Python', 'Bootcamp'],
   },
 ];
 

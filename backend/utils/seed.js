@@ -3,7 +3,6 @@ const mongoose    = require("mongoose");
 const connectDB   = require("../config/db");
 const User        = require("../models/User");
 const Event       = require("../models/Event");
-const Organizer   = require("../models/Organizer");
 
 const seed = async () => {
   await connectDB();
@@ -11,7 +10,6 @@ const seed = async () => {
 
   await User.deleteMany();
   await Event.deleteMany();
-  await Organizer.deleteMany();
 
   // ── Users (organizers with gmail-dept format) ──────────────────────────────
   const users = await User.create([
@@ -49,18 +47,7 @@ const seed = async () => {
   ]);
   console.log(`✅ Created ${users.length} users`);
 
-  // ── Organizers (for OrgChart — mirrors users) ──────────────────────────────
-  const orgDocs = users
-    .filter(u => !u.isAdmin)
-    .map(u => ({
-      name:       u.name,
-      email:      u.email,
-      department: u.department,
-      role:       u.role,
-      avatar:     u.name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase(),
-    }));
-  await Organizer.create(orgDocs);
-  console.log(`✅ Created ${orgDocs.length} organizers`);
+  // Organizers are users with isAdmin: false, which orgChart queries directly
 
   // ── Events ─────────────────────────────────────────────────────────────────
   const u = (email) => users.find(x => x.email === email);

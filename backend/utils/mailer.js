@@ -1,16 +1,30 @@
 const nodemailer = require("nodemailer");
 const QRCode = require("qrcode");
 
-const createTransporter = () =>
-  nodemailer.createTransport({
-    host:   process.env.EMAIL_HOST  || "smtp.gmail.com",
-    port:   Number(process.env.EMAIL_PORT) || 587,
-    secure: false,
+const createTransporter = () => {
+  // Use Gmail service mode (more reliable than manual host/port)
+  const useService = !process.env.EMAIL_HOST || process.env.EMAIL_HOST === 'smtp.gmail.com';
+
+  const opts = {
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
     },
-  });
+    connectionTimeout: 10000, // 10s connect timeout
+    greetingTimeout:   10000, // 10s greeting timeout
+    socketTimeout:     15000, // 15s socket timeout
+  };
+
+  if (useService) {
+    opts.service = 'gmail';
+  } else {
+    opts.host   = process.env.EMAIL_HOST;
+    opts.port   = Number(process.env.EMAIL_PORT) || 587;
+    opts.secure = Number(process.env.EMAIL_PORT) === 465;
+  }
+
+  return nodemailer.createTransport(opts);
+};
 
 // ── OTP verification email ────────────────────────────────────────────────────
 const sendOTPEmail = async ({ email, code }) => {
@@ -191,4 +205,31 @@ const sendConfirmationEmail = async ({ name, email, event, registrationId }) => 
   });
 };
 
-module.exports = { sendOTPEmail, sendConfirmationEmail };
+// ── Password Reset Email ────────────────────────────────────────────────────────
+const sendPasswordResetEmail = async ({ email, code }) => {
+  const transporter = createTransporter();
+  await transporter.sendMail({
+    from:    process.env.EMAIL_FROM || "Campus EventHub <noreply@eventhub.com>",
+    to:      email,
+    subject: `Password Reset Code for Campus EventHub: ${code}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#fff;border-radius:16px;">
+        <div style="text-align:center;margin-bottom:24px;">
+          <h2 style="color:#6366f1;margin:0;font-size:22px;">Campus EventHub</h2>
+          <p style="color:#6b7280;margin-top:4px;font-size:14px;">Password Reset Request</p>
+        </div>
+        <p style="color:#374151;">Hi there! We received a request to reset your password. Use the code below to complete the reset process.</p>
+        <div style="background:#f3f4f6;border-radius:16px;padding:32px;text-align:center;margin:24px 0;">
+          <p style="margin:0;color:#6b7280;font-size:13px;">Your password reset code</p>
+          <div style="font-size:52px;font-weight:700;letter-spacing:14px;color:#6366f1;margin:16px 0;font-family:monospace;">${code}</div>
+          <p style="margin:0;color:#9ca3af;font-size:12px;">Expires in 10 minutes. Do not share this code.</p>
+        </div>
+        <p style="color:#9ca3af;font-size:12px;text-align:center;">If you did not request a password reset, you can safely ignore this email.</p>
+        <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;"/>
+        <p style="color:#9ca3af;font-size:11px;text-align:center;">Campus EventHub — University Event Management System</p>
+      </div>
+    `,
+  });
+};
+
+module.exports = { sendOTPEmail, sendConfirmationEmail, sendPasswordResetEmail };

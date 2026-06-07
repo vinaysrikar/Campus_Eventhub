@@ -1,82 +1,120 @@
-require("dotenv").config();
-const express    = require("express");
-const cors       = require("cors");
-const helmet     = require("helmet");
-const morgan     = require("morgan");
-const rateLimit  = require("express-rate-limit");
-const connectDB  = require("./config/db");
+const express = require("express");
+const dotenv = require("dotenv");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const helmet = require("helmet");
+const morgan = require("morgan");
+const path = require("path");
+const rateLimit = require("express-rate-limit");
+const { v2: cloudinary } = require("cloudinary");
+const connectDB = require("./config/db");
+const { startEventStatusCron } = require("./utils/eventStatusCron");
+
+dotenv.config();
 
 const app = express();
 
-connectDB();
+// ─── Middleware ───────────────────────────────────────────────
+app.use(helmet());
+app.use(morgan("dev"));
 
-// ── Security ──────────────────────────────────────────────────────────────────
-app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }, // allow images from cloudinary
-}));
-
+// Strict CORS config matching CLIENT_URL
+const allowedOrigin = process.env.CLIENT_URL || "http://localhost:8080";
 app.use(cors({
-  origin: process.env.CLIENT_URL || "http://localhost:8080",
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    if (origin === allowedOrigin || origin === "http://localhost:8080" || origin === "http://localhost:5173" || origin === "http://localhost:3000") {
+      return callback(null, true);
+    }
+    if (process.env.NODE_ENV !== "production") {
+      return callback(null, true);
+    }
+    callback(new Error("Not allowed by CORS"));
+  },
   credentials: true,
-  methods: ["GET","POST","PUT","DELETE","OPTIONS"],
-  allowedHeaders: ["Content-Type","Authorization"],
 }));
 
-// ── Rate limiting (relaxed for dev, strict for prod) ─────────────────────────
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: process.env.NODE_ENV === "production" ? 100 : 500,
+// Apply Rate Limiting to Auth Endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: { error: "Too many requests from this IP, please try again after 15 minutes." },
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: "Too many requests. Please wait a moment." },
 });
+app.use("/api/auth", authLimiter);
 
-// Stricter limit only on auth (prevent brute force)
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 20,
-  message: { error: "Too many auth attempts. Please wait 15 minutes." },
-});
-
-app.use("/api", apiLimiter);
-app.use("/api/auth/login",      authLimiter);
-app.use("/api/auth/send-otp",   authLimiter);
-app.use("/api/auth/verify-otp", authLimiter);
-
-// ── Body parsing ──────────────────────────────────────────────────────────────
 app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+app.use(express.urlencoded({ extended: true }));
 
 // Serve static uploads
-const path = require("path");
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
-if (process.env.NODE_ENV !== "production") app.use(morgan("dev"));
-
-// ── Routes ────────────────────────────────────────────────────────────────────
-app.use("/api/auth",          require("./routes/authRoutes"));
-app.use("/api/events",        require("./routes/eventRoutes"));
-app.use("/api/registrations", require("./routes/registrationRoutes"));
-app.use("/api/organizers",    require("./routes/organizerRoutes"));
-app.use("/api/upload",        require("./routes/uploadRoutes"));
-
-app.get("/api/health", (req, res) =>
-  res.json({ status: "ok", uptime: process.uptime(), env: process.env.NODE_ENV })
-);
-
-// ── Error handlers ────────────────────────────────────────────────────────────
-app.use((req, res) => res.status(404).json({ error: "Route not found" }));
-
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(err.status || 500).json({ error: err.message || "Internal Server Error" });
+// ─── Cloudinary config ──────────────────────────────────────
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+// ─── Routes ─────────────────────────────────────────────────
+const authRoutes = require("./routes/authRoutes");
+const eventRoutes = require("./routes/eventRoutes");
+const organizerRoutes = require("./routes/organizerRoutes");
+const registrationRoutes = require("./routes/registrationRoutes");
+const uploadRoutes = require("./routes/uploadRoutes");
+
+app.use("/api/auth", authRoutes);
+app.use("/api/events", eventRoutes);
+app.use("/api/organizers", organizerRoutes);
+app.use("/api/registrations", registrationRoutes);
+app.use("/api/upload", uploadRoutes);
+
+// ─── Health / status routes ─────────────────────────────────
+app.get("/", (req, res) => {
+  res.send("Server is running 🚀");
+});
+
+app.get("/test", (req, res) => {
+  res.send("TEST OK");
+});
+
+app.get("/api/db-status", (req, res) => {
+  const states = ["disconnected", "connected", "connecting", "disconnecting"];
+  const state = mongoose.connection.readyState;
+  res.json({
+    status: state,
+    statusText: states[state] || "unknown",
+    database: mongoose.connection.name || "none",
+  });
+});
+
+// DB Events are handled by Mongoose globally
+
+// ─── Mongoose connection events ─────────────────────────────
+mongoose.connection.on("connected", () => {
+  console.log("✅ MongoDB connected successfully");
+  console.log("   Database:", mongoose.connection.name);
+  console.log("   Host:", mongoose.connection.host);
+});
+
+mongoose.connection.on("error", (err) => {
+  console.error("❌ MongoDB connection error:", err.message);
+});
+
+mongoose.connection.on("disconnected", () => {
+  console.warn("⚠️  MongoDB disconnected");
+});
+
+// ─── Start ──────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 EventHub API  →  http://localhost:${PORT}  [${process.env.NODE_ENV || "development"}]`);
-  
-  // Start auto status updater for events
-  const { startEventStatusCron } = require("./utils/eventStatusCron");
-  startEventStatusCron();
-});
+
+const startServer = async () => {
+  await connectDB();
+  startEventStatusCron(); // Keep event statuses in sync
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+  });
+};
+
+startServer();

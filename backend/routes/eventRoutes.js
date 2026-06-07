@@ -18,7 +18,7 @@ router.get("/stats", getStats);
 router.get("/",      getEvents);
 router.get("/:id",   getEvent);
 router.post("/",     protect, eventValidation, createEvent);
-router.put("/:id",   protect, updateEvent);
+router.put("/:id",   protect, eventValidation, updateEvent);
 router.delete("/:id",protect, deleteEvent);
 
 module.exports = router;

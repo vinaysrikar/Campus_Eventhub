@@ -14,6 +14,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
+  register: (data: object) => Promise<boolean>;
   logout: () => void;
   isAuthenticated: boolean;
   loading: boolean;
@@ -26,12 +27,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   // Restore session from stored token on page load
-  // ONLY restore session if user is on dashboard or a protected page
   useEffect(() => {
     const token = localStorage.getItem('token');
-    const isProtectedPage = window.location.pathname === '/dashboard';
 
-    if (!token || !isProtectedPage) {
+    if (!token) {
       setLoading(false);
       return;
     }
@@ -53,13 +52,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
+  const register = useCallback(async (data: object): Promise<boolean> => {
+    try {
+      const res = await authAPI.register(data);
+      localStorage.setItem('token', res.data.token);
+      setUser(res.data.user);
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+
   const logout = useCallback(() => {
     localStorage.removeItem('token');
     setUser(null);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user, loading }}>
+    <AuthContext.Provider value={{ user, login, register, logout, isAuthenticated: !!user, loading }}>
       {children}
     </AuthContext.Provider>
   );

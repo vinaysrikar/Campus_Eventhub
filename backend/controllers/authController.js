@@ -1,9 +1,9 @@
 const jwt    = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
+const crypto = require("crypto");
 const User   = require("../models/User");
 const OTP    = require("../models/OTP");
-const { sendOTPEmail } = require("../utils/mailer");
-
+const { sendOTPEmail, sendPasswordResetEmail } = require("../utils/mailer");
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || "7d" });
 
@@ -41,7 +41,10 @@ const sendOTP = async (req, res) => {
     }
 
     // Generate 6-digit OTP
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const code = crypto.randomInt(100000, 999999).toString();
+    console.log(`\n=========================================`);
+    console.log(`🔑 DEV MODE: Verification code for ${email} is: ${code}`);
+    console.log(`=========================================\n`);
 
     // Delete any old OTP for this email, save new one
     await OTP.deleteMany({ email });
@@ -50,10 +53,18 @@ const sendOTP = async (req, res) => {
     // Send email
     try {
       await sendOTPEmail({ email, code });
-      res.json({ message: "Verification code sent to your email.", dept });
+      if (process.env.NODE_ENV === "development") {
+        res.json({ message: "Verification code sent to your email.", dept, code });
+      } else {
+        res.json({ message: "Verification code sent to your email.", dept });
+      }
     } catch (mailErr) {
       console.error("OTP email failed:", mailErr.message);
-      return res.status(500).json({ error: "Failed to send email. Check EMAIL_* config." });
+      if (process.env.NODE_ENV === "development") {
+        return res.json({ message: "Email failed but allowing continuation with code.", dept, code });
+      } else {
+        return res.status(500).json({ error: "Failed to send verification email. Please try again later." });
+      }
     }
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -165,4 +176,81 @@ const getMe = async (req, res) => {
   });
 };
 
-module.exports = { sendOTP, verifyOTP, register, login, getMe };
+// ── POST /api/auth/forgot-password ───────────────────────────────────────────
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: "Email is required." });
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: "No account found with that email." });
+    }
+
+    // Generate 6-digit OTP
+    const code = crypto.randomInt(100000, 999999).toString();
+    console.log(`\n=========================================`);
+    console.log(`🔑 DEV MODE: Password reset code for ${email} is: ${code}`);
+    console.log(`=========================================\n`);
+
+    // Delete old OTPs and save new one
+    await OTP.deleteMany({ email });
+    await OTP.create({ email, code });
+
+    try {
+      await sendPasswordResetEmail({ email, code });
+      if (process.env.NODE_ENV === "development") {
+        res.json({ message: "Password reset code sent to your email.", code });
+      } else {
+        res.json({ message: "Password reset code sent to your email." });
+      }
+    } catch (mailErr) {
+      console.error("Password reset email failed:", mailErr.message);
+      if (process.env.NODE_ENV === "development") {
+        return res.json({ message: "Email failed but allowing continuation with code.", code });
+      } else {
+        return res.status(500).json({ error: "Failed to send password reset email. Please try again later." });
+      }
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ── POST /api/auth/reset-password ────────────────────────────────────────────
+const resetPassword = async (req, res) => {
+  try {
+    const { email, code, newPassword } = req.body;
+    if (!email || !code || !newPassword) {
+      return res.status(400).json({ error: "Email, code, and new password are required." });
+    }
+    
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: "Password must be at least 6 characters." });
+    }
+
+    const record = await OTP.findOne({ email });
+    if (!record) {
+      return res.status(400).json({ error: "Code expired or not requested." });
+    }
+    if (record.code !== String(code).trim()) {
+      return res.status(400).json({ error: "Incorrect code. Please try again." });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ error: "User not found." });
+
+    // Update password (it will be hashed by the User model pre-save hook)
+    user.password = newPassword;
+    await user.save();
+
+    // Delete OTP
+    await OTP.deleteMany({ email });
+    
+    res.json({ message: "Password has been reset successfully. You can now login." });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+module.exports = { sendOTP, verifyOTP, register, login, getMe, forgotPassword, resetPassword };

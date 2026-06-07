@@ -12,10 +12,11 @@ const getEvents = async (req, res) => {
     if (status)   filter.status   = status;
     if (featured === "true") filter.featured = true;
     if (search) {
+      const escapedSearch = String(search).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       filter.$or = [
-        { title: { $regex: search, $options: "i" } },
-        { tags:  { $regex: search, $options: "i" } },
-        { venue: { $regex: search, $options: "i" } },
+        { title: { $regex: escapedSearch, $options: "i" } },
+        { tags:  { $regex: escapedSearch, $options: "i" } },
+        { venue: { $regex: escapedSearch, $options: "i" } },
       ];
     }
 
@@ -134,8 +135,18 @@ const createEvent = async (req, res) => {
       return res.status(400).json({ error: "Cannot create an event with a past date. Please select today or a future date." });
     }
 
+    const { title, description, date, time, venue, maxCapacity, image, tags, googleFormUrl } = req.body;
     const event = await Event.create({
-      ...req.body,
+      title,
+      description,
+      date,
+      time,
+      venue,
+      maxCapacity,
+      image,
+      tags: Array.isArray(tags) ? tags : [],
+      googleFormUrl,
+      featured: req.user.isAdmin ? !!req.body.featured : false,
       department:  req.user.department,
       organizer:   req.user.name,
       organizerId: req.user._id,
@@ -156,12 +167,19 @@ const updateEvent = async (req, res) => {
       return res.status(403).json({ error: "Not authorized to update this event." });
     }
 
-    // Prevent changing department/organizer via body
-    delete req.body.department;
-    delete req.body.organizerId;
-    delete req.body.organizer;
+    const allowedUpdates = {};
+    const whitelist = ["title", "description", "date", "time", "venue", "maxCapacity", "image", "tags", "googleFormUrl", "status"];
+    if (req.user.isAdmin) {
+      whitelist.push("featured");
+    }
 
-    const updated = await Event.findByIdAndUpdate(req.params.id, req.body, {
+    whitelist.forEach(field => {
+      if (req.body[field] !== undefined) {
+        allowedUpdates[field] = req.body[field];
+      }
+    });
+
+    const updated = await Event.findByIdAndUpdate(req.params.id, allowedUpdates, {
       new: true, runValidators: true,
     }).lean();
     const regCount = await Registration.countDocuments({ event: req.params.id });
