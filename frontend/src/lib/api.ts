@@ -15,7 +15,13 @@ api.interceptors.request.use((config) => {
 // On 401, just reject the promise — don't touch localStorage or redirect.
 // AuthContext handles session management. The interceptor should NEVER redirect.
 api.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    const contentType = res.headers && res.headers["content-type"];
+    if (contentType && contentType.includes("text/html")) {
+      return Promise.reject(new Error("API returned HTML instead of JSON. Check your VITE_API_URL configuration."));
+    }
+    return res;
+  },
   (error) => {
     return Promise.reject(error);
   }

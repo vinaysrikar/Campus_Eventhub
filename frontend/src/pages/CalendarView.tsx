@@ -25,7 +25,10 @@ const CalendarView = () => {
   // Fetch ALL events from backend
   const { data: allEvents = [], isLoading } = useQuery({
     queryKey: ['events'],
-    queryFn:  async () => { const r = await eventsAPI.getAll(); return r.data; },
+    queryFn:  async () => {
+      const r = await eventsAPI.getAll();
+      return Array.isArray(r.data) ? r.data : [];
+    },
   });
 
   // Build calendar grid

@@ -9,7 +9,10 @@ import { Crown, Users, ChevronDown } from 'lucide-react';
 const OrgChart = () => {
   const { data: organizers = [], isLoading } = useQuery({
     queryKey: ['organizers'],
-    queryFn:  async () => { const r = await organizersAPI.getAll(); return r.data; },
+    queryFn:  async () => {
+      const r = await organizersAPI.getAll();
+      return Array.isArray(r.data) ? r.data : [];
+    },
   });
 
   return (

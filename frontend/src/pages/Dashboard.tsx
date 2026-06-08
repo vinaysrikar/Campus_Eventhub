@@ -39,7 +39,7 @@ const Dashboard = () => {
     queryFn:  async () => {
       const params = user.isAdmin ? {} : { department: user.department };
       const r = await eventsAPI.getAll(params);
-      return r.data;
+      return Array.isArray(r.data) ? r.data : [];
     },
   });
 
@@ -49,7 +49,7 @@ const Dashboard = () => {
     queryFn:  async () => {
       if (!viewingRegistrations) return [];
       const r = await registrationsAPI.getForEvent(viewingRegistrations);
-      return r.data;
+      return Array.isArray(r.data) ? r.data : [];
     },
     enabled: !!viewingRegistrations,
   });

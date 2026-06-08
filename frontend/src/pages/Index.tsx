@@ -30,7 +30,10 @@ const Index = () => {
   // Fetch all events from backend
   const { data: allEvents = [], isLoading } = useQuery({
     queryKey: ['events'],
-    queryFn:  async () => { const r = await eventsAPI.getAll(); return r.data; },
+    queryFn:  async () => {
+      const r = await eventsAPI.getAll();
+      return Array.isArray(r.data) ? r.data : [];
+    },
   });
 
   const featuredEvents = useMemo(() => allEvents.filter((e: any) => e.featured), [allEvents]);
