@@ -30,17 +30,16 @@ const Dashboard = () => {
   const emptyForm = { title:'', description:'', date:'', time:'', venue:'', maxCapacity:'', tags:'', googleFormUrl:'', image:'' };
   const [form, setForm] = useState(emptyForm);
 
-  if (loading) return null; // Avoid early redirect while verifying session
-  if (!isAuthenticated || !user) return <Navigate to="/" replace />;
-
   // Fetch dept events (or all for admin)
   const { data: events = [], isLoading } = useQuery({
-    queryKey: ['events', user.department],
+    queryKey: ['events', user?.department],
     queryFn:  async () => {
+      if (!user) return [];
       const params = user.isAdmin ? {} : { department: user.department };
       const r = await eventsAPI.getAll(params);
       return Array.isArray(r.data) ? r.data : [];
     },
+    enabled: !!user,
   });
 
   // Fetch registrations for selected event
@@ -51,24 +50,8 @@ const Dashboard = () => {
       const r = await registrationsAPI.getForEvent(viewingRegistrations);
       return Array.isArray(r.data) ? r.data : [];
     },
-    enabled: !!viewingRegistrations,
+    enabled: !!viewingRegistrations && !!user,
   });
-
-  const totalCapacity      = events.reduce((s: number, e: any) => s + e.maxCapacity, 0);
-  const totalRegistrations = events.reduce((s: number, e: any) => s + (e.registrations || 0), 0);
-
-  const openNew = () => {
-    setEditingEvent(null); setImageFile(null); setForm(emptyForm); setShowForm(true);
-  };
-  const openEdit = (evt: any) => {
-    setEditingEvent(evt); setImageFile(null);
-    setForm({
-      title: evt.title, description: evt.description, date: evt.date, time: evt.time,
-      venue: evt.venue, maxCapacity: String(evt.maxCapacity), tags: (evt.tags||[]).join(', '),
-      googleFormUrl: evt.googleFormUrl||'', image: evt.image||'',
-    });
-    setShowForm(true);
-  };
 
   // Save (create or update)
   const saveMutation = useMutation({
@@ -111,6 +94,25 @@ const Dashboard = () => {
     },
     onError: (err: any) => toast.error(err.response?.data?.error || 'Delete failed.'),
   });
+
+  if (loading) return null; // Avoid early redirect while verifying session
+  if (!isAuthenticated || !user) return <Navigate to="/" replace />;
+
+  const totalCapacity      = events.reduce((s: number, e: any) => s + e.maxCapacity, 0);
+  const totalRegistrations = events.reduce((s: number, e: any) => s + (e.registrations || 0), 0);
+
+  const openNew = () => {
+    setEditingEvent(null); setImageFile(null); setForm(emptyForm); setShowForm(true);
+  };
+  const openEdit = (evt: any) => {
+    setEditingEvent(evt); setImageFile(null);
+    setForm({
+      title: evt.title, description: evt.description, date: evt.date, time: evt.time,
+      venue: evt.venue, maxCapacity: String(evt.maxCapacity), tags: (evt.tags||[]).join(', '),
+      googleFormUrl: evt.googleFormUrl||'', image: evt.image||'',
+    });
+    setShowForm(true);
+  };
 
   const exportCSV = () => {
     if (!registrations.length) return toast.error('No registrations to export.');

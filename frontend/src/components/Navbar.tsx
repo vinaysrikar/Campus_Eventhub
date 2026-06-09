@@ -56,7 +56,7 @@ export const Navbar = () => {
           >
             <EventHubLogo />
           </motion.div>
-          <span className="font-display font-bold text-xl tracking-tight text-gradient">
+          <span className="font-bold text-xl tracking-normal text-gradient leading-none">
             Campus EventHub
           </span>
         </Link>

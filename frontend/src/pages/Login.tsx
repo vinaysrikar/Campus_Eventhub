@@ -367,9 +367,7 @@ const RegisterForm = () => {
 
       </AnimatePresence>
 
-      <p className="text-xs text-center text-muted-foreground pt-1">
-        Max 5 organizers allowed per department.
-      </p>
+
     </div>
   );
 };

@@ -3,6 +3,7 @@ import { eventsAPI }     from '@/lib/api';
 import { Calendar, Users, Building2, UserCheck } from 'lucide-react';
 import { motion }        from 'framer-motion';
 import { useEffect, useState, useRef } from 'react';
+import { events as mockEvents } from '@/lib/data';
 
 const AnimatedNumber = ({ target }: { target: number }) => {
   const [val, setVal] = useState(0);
@@ -39,14 +40,28 @@ const AnimatedNumber = ({ target }: { target: number }) => {
 export const StatsBar = () => {
   const { data } = useQuery({
     queryKey: ['stats'],
-    queryFn:  async () => { const r = await eventsAPI.getStats(); return r.data; },
+    queryFn:  async () => {
+      try {
+        const r = await eventsAPI.getStats();
+        return r.data;
+      } catch (err) {
+        return null;
+      }
+    },
   });
 
+  const hasData = data && Object.keys(data).length > 0;
+
+  const mockTotalEvents = mockEvents.length;
+  const mockActiveDepts = 6;
+  const mockTotalRegs = mockEvents.reduce((s, e) => s + (e.registrations || 0), 0);
+  const mockUpcoming = mockEvents.filter(e => e.status === 'upcoming').length;
+
   const items = [
-    { label: 'Total Events',        value: data?.totalEvents        ?? 0, icon: Calendar   },
-    { label: 'Active Departments',  value: data?.activeDepartments  ?? 0, icon: Building2  },
-    { label: 'Registrations',       value: data?.totalRegistrations ?? 0, icon: Users      },
-    { label: 'Upcoming',            value: data?.upcomingEvents     ?? 0, icon: UserCheck  },
+    { label: 'Total Events',        value: hasData ? (data.totalEvents ?? 0) : mockTotalEvents, icon: Calendar   },
+    { label: 'Active Departments',  value: hasData ? (data.activeDepartments ?? 0) : mockActiveDepts, icon: Building2  },
+    { label: 'Registrations',       value: hasData ? (data.totalRegistrations ?? 0) : mockTotalRegs, icon: Users      },
+    { label: 'Upcoming',            value: hasData ? (data.upcomingEvents ?? 0) : mockUpcoming, icon: UserCheck  },
   ];
 
   return (

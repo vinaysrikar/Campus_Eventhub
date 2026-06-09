@@ -17,7 +17,7 @@ It allows organizers to create and manage events, while participants can easily 
 * Dashboard to view all events
 * View number of participants per event
 * Download participant data as a sheet (Excel/CSV)
-* Limited to 5 organizers (department-based access)
+* Department-based access
 
 ### 🧑‍🎓 Participant
 
@@ -75,7 +75,7 @@ DB_URL=your_database_url
 
 * Students can quickly find and register for campus events
 * Organizers can efficiently manage participants and track registrations
-* Departments can control organizer access (max 5 organizers)
+* Departments can control organizer access
 
 ---
 

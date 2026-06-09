@@ -1,15 +1,16 @@
 import { useState, useMemo, useRef } from 'react';
 import { useQuery }                  from '@tanstack/react-query';
 import { eventsAPI }                 from '@/lib/api';
-import { Department }                from '@/lib/data';
+import { Department, events as mockEvents } from '@/lib/data';
 import { Navbar }                    from '@/components/Navbar';
+import { Footer }                    from '@/components/Footer';
 import { EventCard }                 from '@/components/EventCard';
 import { DeptFilter }                from '@/components/DeptFilter';
 import { StatsBar }                  from '@/components/StatsBar';
 import { EventDetailModal }          from '@/components/EventDetailModal';
 import { RegistrationModal }         from '@/components/RegistrationModal';
 import { Skeleton }                  from '@/components/ui/skeleton';
-import { Search, ChevronDown, Zap, Star, ArrowRight } from 'lucide-react';
+import { Search, ChevronDown, Zap, Star, ArrowRight, BookOpen, ShieldCheck, Sparkles } from 'lucide-react';
 import { Input }                     from '@/components/ui/input';
 import { Button }                    from '@/components/ui/button';
 import { Badge }                     from '@/components/ui/badge';
@@ -21,6 +22,7 @@ const Index = () => {
   const [search,        setSearch]        = useState('');
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [registerEvent, setRegisterEvent] = useState<any>(null);
+  const [showAll,       setShowAll]       = useState(false);
   const eventsRef = useRef<HTMLDivElement>(null);
 
   const { scrollYProgress } = useScroll();
@@ -31,8 +33,14 @@ const Index = () => {
   const { data: allEvents = [], isLoading } = useQuery({
     queryKey: ['events'],
     queryFn:  async () => {
-      const r = await eventsAPI.getAll();
-      return Array.isArray(r.data) ? r.data : [];
+      try {
+        const r = await eventsAPI.getAll();
+        const data = Array.isArray(r.data) ? r.data : [];
+        return data.length > 0 ? data : mockEvents;
+      } catch (err) {
+        console.warn("Backend failed, using mock events.", err);
+        return mockEvents;
+      }
     },
   });
 
@@ -47,6 +55,13 @@ const Index = () => {
       return matchDept && matchSearch;
     });
   }, [allEvents, dept, search]);
+
+  const displayedEvents = useMemo(() => {
+    if (search || dept !== 'ALL' || showAll) {
+      return filtered;
+    }
+    return filtered.slice(0, 6);
+  }, [filtered, search, dept, showAll]);
 
   const handleRegister = (event: any) => { setSelectedEvent(null); setRegisterEvent(event); };
 
@@ -76,7 +91,7 @@ const Index = () => {
           <motion.h1 initial={{ opacity:0, y:30 }} animate={{ opacity:1, y:0 }}
             transition={{ duration:0.8, delay:0.1, ease:[0.16,1,0.3,1] }}
             className="font-display text-5xl md:text-7xl font-bold mb-6 tracking-tight leading-[1.1]">
-            Campus{' '}<span className="relative"><span className="text-accent">EventHub</span>
+            Campus <span className="relative"><span className="text-accent">EventHub</span>
               <motion.span className="absolute -bottom-2 left-0 right-0 h-1 rounded-full gradient-accent"
                 initial={{ scaleX:0 }} animate={{ scaleX:1 }} transition={{ delay:0.8, duration:0.6 }}/>
             </span>
@@ -104,6 +119,49 @@ const Index = () => {
 
       <div ref={eventsRef} className="container mx-auto px-4 py-14 space-y-14">
         <StatsBar />
+
+        {/* ── About / Purpose Section ── */}
+        <section className="grid md:grid-cols-2 gap-8 pt-4">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="glass-card rounded-3xl p-8 space-y-4 hover:shadow-xl hover:glow-primary transition-all duration-300 border-l-4 border-l-primary"
+          >
+            <div className="w-12 h-12 rounded-2xl gradient-primary flex items-center justify-center text-primary-foreground">
+              <BookOpen className="w-6 h-6" />
+            </div>
+            <h3 className="font-display text-2xl font-bold">Discover & Register (For Students)</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Campus EventHub simplifies finding and registering for student activities. Browse technical symposiums, workshops, and hackathons from all university departments in one clean calendar.
+            </p>
+            <ul className="space-y-2 text-xs text-muted-foreground pt-2">
+              <li className="flex items-center gap-2">✓ No registration account needed to browse or sign up</li>
+              <li className="flex items-center gap-2">✓ OTP verification prevents spam and secures your spot</li>
+              <li className="flex items-center gap-2">✓ Get confirmation emails instantly with calendar details</li>
+            </ul>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="glass-card rounded-3xl p-8 space-y-4 hover:shadow-xl hover:glow-accent transition-all duration-300 border-l-4 border-l-accent"
+          >
+            <div className="w-12 h-12 rounded-2xl gradient-accent flex items-center justify-center text-accent-foreground">
+              <ShieldCheck className="w-6 h-6" />
+            </div>
+            <h3 className="font-display text-2xl font-bold">Organize & Track (For Departments)</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Empower your department organizers to publish events, track attendee caps, and oversee participant lists through an access-controlled department dashboard.
+            </p>
+            <ul className="space-y-2 text-xs text-muted-foreground pt-2">
+              <li className="flex items-center gap-2">✓ Secure login for authenticated department heads</li>
+              <li className="flex items-center gap-2">✓ Restrained limit of 5 authorized organizers per department</li>
+              <li className="flex items-center gap-2">✓ Real-time stats, registration charts, and CSV/Excel exports</li>
+            </ul>
+          </motion.div>
+        </section>
 
         {/* ── Featured Events ── */}
         {!isLoading && featuredEvents.length > 0 && !search && dept === 'ALL' && (
@@ -202,9 +260,21 @@ const Index = () => {
 
         {!isLoading && (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filtered.map((e: any, i: number) => (
+            {displayedEvents.map((e: any, i: number) => (
               <EventCard key={e._id || e.id} event={{ ...e, id: e._id || e.id }} index={i} onClick={() => setSelectedEvent(e)} />
             ))}
+          </div>
+        )}
+
+        {!isLoading && filtered.length > 6 && !search && dept === 'ALL' && (
+          <div className="flex justify-center pt-4">
+            <Button
+              onClick={() => setShowAll(!showAll)}
+              variant="outline"
+              className="border-primary text-primary hover:bg-primary/10 rounded-xl px-8"
+            >
+              {showAll ? 'Show Less' : `Show All ${filtered.length} Events`}
+            </Button>
           </div>
         )}
 
@@ -217,12 +287,7 @@ const Index = () => {
         )}
       </div>
 
-      <footer className="border-t bg-card/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-8 text-center text-sm text-muted-foreground">
-          <p className="font-display font-semibold text-gradient text-lg mb-1">Campus EventHub</p>
-          <p>© 2026 University Event Management System. All rights reserved.</p>
-        </div>
-      </footer>
+      <Footer />
 
       <EventDetailModal event={selectedEvent} open={!!selectedEvent} onClose={() => setSelectedEvent(null)} onRegister={handleRegister}/>
       <RegistrationModal event={registerEvent} open={!!registerEvent} onClose={() => setRegisterEvent(null)}/>

@@ -1,8 +1,9 @@
 import { useState, useMemo }  from 'react';
 import { useQuery }           from '@tanstack/react-query';
 import { eventsAPI }          from '@/lib/api';
-import { deptColorMap }       from '@/lib/data';
+import { deptColorMap, events as mockEvents }       from '@/lib/data';
 import { Navbar }             from '@/components/Navbar';
+import { Footer }             from '@/components/Footer';
 import { EventDetailModal }   from '@/components/EventDetailModal';
 import { RegistrationModal }  from '@/components/RegistrationModal';
 import { Badge }              from '@/components/ui/badge';
@@ -26,8 +27,13 @@ const CalendarView = () => {
   const { data: allEvents = [], isLoading } = useQuery({
     queryKey: ['events'],
     queryFn:  async () => {
-      const r = await eventsAPI.getAll();
-      return Array.isArray(r.data) ? r.data : [];
+      try {
+        const r = await eventsAPI.getAll();
+        const data = Array.isArray(r.data) ? r.data : [];
+        return data.length > 0 ? data : mockEvents;
+      } catch (err) {
+        return mockEvents;
+      }
     },
   });
 
@@ -163,6 +169,8 @@ const CalendarView = () => {
           </motion.div>
         </div>
       </div>
+
+      <Footer />
 
       <EventDetailModal event={selectedEvent} open={!!selectedEvent} onClose={() => setSelectedEvent(null)} onRegister={handleRegister}/>
       <RegistrationModal event={registerEvent} open={!!registerEvent} onClose={() => setRegisterEvent(null)}/>

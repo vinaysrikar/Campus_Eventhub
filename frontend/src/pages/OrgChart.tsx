@@ -1,18 +1,42 @@
-import { useQuery }       from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { organizersAPI }  from '@/lib/api';
 import { departments, deptColorMap, deptBorderColorMap } from '@/lib/data';
 import { Navbar }         from '@/components/Navbar';
+import { Footer }         from '@/components/Footer';
 import { Skeleton }       from '@/components/ui/skeleton';
 import { motion }         from 'framer-motion';
-import { Crown, Users, ChevronDown } from 'lucide-react';
+import { Crown, Users, ChevronDown, UserPlus, Trash2 } from 'lucide-react';
+import { useAuth }        from '@/lib/auth-context';
+import { toast }          from 'sonner';
 
 const OrgChart = () => {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+
   const { data: organizers = [], isLoading } = useQuery({
     queryKey: ['organizers'],
     queryFn:  async () => {
-      const r = await organizersAPI.getAll();
-      return Array.isArray(r.data) ? r.data : [];
+      try {
+        const r = await organizersAPI.getAll();
+        return Array.isArray(r.data) ? r.data : [];
+      } catch (err) {
+        return [];
+      }
     },
+    // Refresh every 30s so new organizers appear automatically
+    refetchInterval: 30000,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => organizersAPI.delete(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['organizers'] });
+      qc.invalidateQueries({ queryKey: ['events'] });
+      toast.success('Organizer removed successfully.');
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.error || 'Failed to remove organizer.');
+    }
   });
 
   return (
@@ -76,7 +100,10 @@ const OrgChart = () => {
                   </div>
                   <div className="p-4 space-y-2">
                     {deptOrgs.length === 0 && (
-                      <p className="text-sm text-muted-foreground text-center py-2">No organizers yet</p>
+                      <div className="flex flex-col items-center gap-1 py-4 text-muted-foreground">
+                        <UserPlus className="w-5 h-5 opacity-40" />
+                        <p className="text-xs text-center">No organizers registered yet</p>
+                      </div>
                     )}
                     {deptOrgs.map((org: any, oi: number) => (
                       <motion.div key={org._id || org.id} initial={{ opacity:0, x:-10 }} animate={{ opacity:1, x:0 }}
@@ -85,11 +112,25 @@ const OrgChart = () => {
                         <div className={`w-9 h-9 rounded-full ${deptColorMap[dept.id]} flex items-center justify-center text-xs font-bold text-primary-foreground flex-shrink-0`}>
                           {org.avatar || org.name?.split(' ').map((w: string) => w[0]).join('').slice(0,2).toUpperCase()}
                         </div>
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium truncate">{org.name}</p>
                           <p className="text-xs text-muted-foreground">{org.role}</p>
                         </div>
                         {oi === 0 && <Crown className="w-4 h-4 text-accent ml-auto flex-shrink-0"/>}
+                        {user?.isAdmin && (
+                          <button
+                            onClick={() => {
+                              if (window.confirm(`Are you sure you want to remove ${org.name}? This will also delete all events organized by them.`)) {
+                                deleteMutation.mutate(org._id || org.id);
+                              }
+                            }}
+                            className="p-1 text-destructive hover:bg-destructive/10 rounded transition-colors ml-1"
+                            title="Remove Organizer"
+                            disabled={deleteMutation.isPending}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </motion.div>
                     ))}
                     <div className="flex items-center gap-1 justify-center pt-2 text-xs text-muted-foreground">
@@ -97,9 +138,9 @@ const OrgChart = () => {
                       {deptOrgs.length}/5 organizers
                     </div>
                     {/* Capacity bar */}
-                    <div className="w-full bg-secondary rounded-full h-1.5 overflow-hidden">
+                    <div className="w-full bg-secondary rounded-full h-1.5 overflow-hidden mt-1">
                       <div className={`h-full ${deptColorMap[dept.id]} transition-all duration-500`}
-                        style={{ width:`${(deptOrgs.length/5)*100}%` }}/>
+                        style={{ width:`${Math.min((deptOrgs.length/5)*100, 100)}%` }}/>
                     </div>
                   </div>
                 </motion.div>
@@ -108,6 +149,7 @@ const OrgChart = () => {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 };
